@@ -27,6 +27,13 @@ const urlParser = require("url");
 
 app.post("/api/shorturl", (req, res) => {
   const originalUrl = req.body.url;
+
+  // Step 1: Check if URL starts with http:// or https://
+  if (!/^https?:\/\//i.test(originalUrl)) {
+    return res.json({ error: "invalid url" });
+  }
+
+  // Step 2: Extract hostname and validate DNS
   const hostname = urlParser.parse(originalUrl).hostname;
 
   dns.lookup(hostname, (err) => {
@@ -34,12 +41,14 @@ app.post("/api/shorturl", (req, res) => {
       return res.json({ error: "invalid url" });
     }
 
+    // Step 3: Save valid URL
     const shortUrl = urlDatabase.length + 1;
     urlDatabase.push({ original_url: originalUrl, short_url: shortUrl });
 
     res.json({ original_url: originalUrl, short_url: shortUrl });
   });
 });
+
 
 app.get("/api/shorturl/:id", (req, res) => {
   const id = parseInt(req.params.id);
